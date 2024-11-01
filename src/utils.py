@@ -57,11 +57,13 @@ def operations_cards(operations: list):
     """Возвращает данные по каждой карте"""
     pass
 
+
 def top_five_transactions(operations: list):
     """Возвращает топ-5 транзакций по сумме платежа"""
     sorted_operations = sorted(operations, key=lambda x: x['Сумма платежа'])
     top_transactions = sorted_operations[:5]
     return top_transactions
+
 
 def currency_rates():
     """Возвращает курсы валют"""
