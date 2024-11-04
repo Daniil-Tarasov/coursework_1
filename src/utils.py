@@ -2,14 +2,16 @@ import json
 import os
 from datetime import datetime
 
+import pandas as pd
 import requests
 from dotenv import load_dotenv
 
-import pandas as pd
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+file_json = os.path.join(project_root, "user_settings.json")
 
 load_dotenv()
-for_currency = os.getenv('API_KEY_FOR_CURRENCY')
-for_stoks = os.getenv('API_KEY_FOR_STOCK')
+for_currency = os.getenv("API_KEY_FOR_CURRENCY")
+for_share = os.getenv("API_KEY_FOR_STOCK")
 
 
 def get_data_from_excel(path_to_the_file: str) -> list:
@@ -55,67 +57,64 @@ def greeting_user() -> str:
         return "Добрый вечер"
 
 
-def operations_cards(operations: list):
+def operations_cards(operations: list) -> list:
     """Возвращает данные по каждой карте"""
     card_operations = {}
     result = []
     for operation in operations:
-        card_number = str(operation.get('Номер карты'))
-        str_amount = str(operation.get('Сумма операции'))
-        amount = str_amount[1:]
-        if card_number != 'nan':
+        card_number = str(operation.get("Номер карты"))
+        amount = operation.get("Сумма операции с округлением")
+        if card_number != "nan":
             last_digits = card_number[-4:]
             if last_digits in card_operations:
-                card_operations[last_digits]['total_spent'] += float(amount)
+                card_operations[last_digits]["total_spent"] += amount
             else:
-                card_operations[last_digits] = {'total_spent': float(amount), 'cashback': 0}
-            card_operations[last_digits]['cashback'] = card_operations[last_digits]['total_spent'] * 0.01
+                card_operations[last_digits] = {"total_spent": (amount), "cashback": 0}
+            card_operations[last_digits]["cashback"] = card_operations[last_digits]["total_spent"] * 0.01
     for digits, data in card_operations.items():
-        result.append({'last_digits': digits, 'total_spent': round(data['total_spent'], 2), 'cashback': data['cashback']})
+        result.append(
+            {"last_digits": digits, "total_spent": round(data["total_spent"], 2), "cashback": data["cashback"]}
+        )
     return result
 
 
-def top_five_transactions(operations: list):
+def top_five_transactions(operations: list) -> list:
     """Возвращает топ-5 транзакций по сумме платежа"""
     sort_transaction = []
-    sorted_operations = sorted(operations, key=lambda x: x['Сумма платежа'])
+    sorted_operations = sorted(operations, key=lambda x: x["Сумма операции с округлением"])
     top_transactions = sorted_operations[:5]
     for sort in top_transactions:
-        date = sort['Дата операции'][:10]
-        str_amount = str(sort.get('Сумма операции'))
-        amount = str_amount[1:]
-        sort_transaction.append({"date": date, 'amount': float(amount), 'category': sort['Категория'], 'description': sort['Описание']})
+        date = sort["Дата операции"][:10]
+        str_amount = sort.get("Сумма операции с округлением")
+        sort_transaction.append(
+            {"date": date, "amount": str_amount, "category": sort["Категория"], "description": sort["Описание"]}
+        )
     return sort_transaction
 
 
-def currency_rates():
+def currency_rates() -> list:
     """Возвращает курсы валют"""
-    result_usd = requests.get(f"https://api.currencyapi.com/v3/latest?apikey={for_currency}&base_currency=USD&currencies=RUB")
-    result_eur = requests.get(f"https://api.currencyapi.com/v3/latest?apikey={for_currency}&base_currency=EUR&currencies=RUB")
-    value_usd = result_usd.json()['data']['RUB']['value']
-    value_eur = result_eur.json()['data']['RUB']['value']
-    result = [
-        {
-            'currency': 'USD',
-            'rate': round(value_usd, 2)
-        },
-        {
-            'currency': 'EUR',
-            'rate': round(value_eur, 2)
-        }
-    ]
+    result_usd = requests.get(
+        f"https://api.currencyapi.com/v3/latest?apikey={for_currency}&base_currency=USD&currencies=RUB"
+    )
+    result_eur = requests.get(
+        f"https://api.currencyapi.com/v3/latest?apikey={for_currency}&base_currency=EUR&currencies=RUB"
+    )
+    value_usd = result_usd.json()["data"]["RUB"]["value"]
+    value_eur = result_eur.json()["data"]["RUB"]["value"]
+    result = [{"currency": "USD", "rate": round(value_usd, 2)}, {"currency": "EUR", "rate": round(value_eur, 2)}]
     return result
 
 
-def stock_prices():
+def stock_prices() -> list:
     """Возвращает стоимость акций из S&P 500"""
-    url = f"https://api.marketstack.com/v1/eod/latest?access_key={for_stoks}"
+    url = f"https://api.marketstack.com/v1/eod/latest?access_key={for_share}"
     result = []
-    with open('../user_settings.json', encoding="utf-8") as file:
-        user_stoks = json.load(file)
-        user_stok = ','.join(user_stoks['user_stocks'])
-        querystring = {"symbols": user_stok}
+    with open(file_json, encoding="utf-8") as file:
+        user_shares = json.load(file)
+        user_share = ",".join(user_shares["user_stocks"])
+        querystring = {"symbols": user_share}
         response = requests.get(url, params=querystring)
-        for data in response.json()['data']:
-            result.append({'stock': data['symbol'], 'price': data['close']})
+        for data in response.json()["data"]:
+            result.append({"stock": data["symbol"], "price": data["close"]})
         return result

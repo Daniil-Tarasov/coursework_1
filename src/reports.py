@@ -1,39 +1,34 @@
 import json
 from datetime import datetime
-from typing import Optional
+from typing import Callable, Optional
 
 import pandas as pd
 
 
-def recording_data(file_name):
+def recording_data(file_name) -> Callable:
     """Декоратор, который записывает в файл результат, который возвращает функция, формирующая отчет"""
-    def decorator(func):
-        def wrapper(*args, **kwargs):
+
+    def decorator(func) -> Callable:
+        def wrapper(*args, **kwargs) -> json:
             result = func(*args, **kwargs)
-            with open(file_name, 'w') as f:
+            with open(file_name, "w") as f:
                 json.dump(result, f)
             return result
+
         return wrapper
+
     return decorator
 
 
-#@recording_data('spending_report.json')
-def spending_by_category(transactions: pd.DataFrame, category: str, date: Optional[str]=None) -> pd.DataFrame:
+# @recording_data('spending_report.json')
+def spending_by_category(transactions: pd.DataFrame, category: str, date: Optional[str] = None) -> pd.DataFrame:
     """Возвращает траты по заданной категории за последние три месяца (от переданной даты)"""
     if date is None:
-        date = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
-    date = datetime.strptime(date, "%d.%m.%Y %H:%M:%S")
+        date = datetime.now()
+    date = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
     three_months_ago = date - pd.DateOffset(months=3)
     filtered_operations = transactions[transactions["Категория"] == category].copy()
-    df_date = pd.to_datetime(transactions["Дата платежа"], format="%d.%m.%Y %H:%M:%S")
+    df_date = pd.to_datetime(transactions["Дата платежа"], format="%d.%m.%Y")
     filtered_operations = transactions[(three_months_ago <= df_date) & (df_date <= date)]
-    result = filtered_operations['Сумма платежа'].sum()
-    return pd.DataFrame(result)
-
-
-df = pd.DataFrame({
-    'Дата платежа': ['20.09.2021', '15.11.2021', '10.12.2021', '22.12.2021', '01.10.2021'],
-    'Категория': ['Супермаркеты', 'Супермаркеты', 'Супермаркеты', 'Супермаркеты', 'Супермаркеты'],
-    'Сумма платежа': [-200, -150, -546, 798, 400]
-})
-print(spending_by_category(df, 'Супермаркеты', '16.11.2021 00:00:00'))
+    result = filtered_operations["Сумма операции с округлением"].sum()
+    return pd.DataFrame({"Траты": [result]})

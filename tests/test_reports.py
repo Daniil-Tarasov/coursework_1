@@ -1,19 +1,28 @@
 import pandas as pd
 import pytest
 
+from src.reports import spending_by_category
+
 
 @pytest.fixture()
 def transactions() -> pd.DataFrame:
     transactions_data = [
-        {"Дата операции": "20.09.2021 12:00:00", "Категория": "Супермаркеты", "Сумма операции": -200.00},
-        {"Дата операции": "15.11.2021 13:30:00", "Категория": "Супермаркеты", "Сумма операции": -150.00},
-        {"Дата операции": "10.12.2021 16:45:00", "Категория": "Супермаркеты", "Сумма операции": -100.00},
-        {"Дата операции": "22.12.2021 18:00:00", "Категория": "Другие", "Сумма операции": -50.00},
-        {"Дата операции": "01.10.2021 09:00:00", "Категория": "Супермаркеты", "Сумма операции": -100.00},
+        {"Дата платежа": "20.09.2021", "Категория": "Супермаркеты", "Сумма операции с округлением": 200.00},
+        {"Дата платежа": "15.11.2021", "Категория": "Супермаркеты", "Сумма операции с округлением": 150.00},
+        {"Дата платежа": "10.12.2021", "Категория": "Супермаркеты", "Сумма операции с округлением": 100.00},
+        {"Дата платежа": "22.12.2021", "Категория": "Другие", "Сумма операции с округлением": 50.00},
+        {"Дата платежа": "01.10.2021", "Категория": "Супермаркеты", "Сумма операции с округлением": 100.00},
     ]
     transactions_df = pd.DataFrame(transactions_data)
     return transactions_df
 
 
-def test_spending_by_category() -> None:
-    pass
+def test_spending_by_category(transactions: pd.DataFrame) -> None:
+    result_df = spending_by_category(transactions, "Супермаркеты", "15.11.2021")
+    assert len(result_df) == 1
+
+
+def test_spending_by_category_no_data(transactions: pd.DataFrame) -> None:
+    result_df = spending_by_category(transactions, "Супермаркеты")
+    assert len(result_df) == 1
+    assert result_df["Траты"].values == 0

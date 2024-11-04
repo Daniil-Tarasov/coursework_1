@@ -1,18 +1,12 @@
-import pytest
 from datetime import datetime
 from typing import Any
-from unittest.mock import patch, mock_open
+from unittest.mock import mock_open, patch
 
 import pandas as pd
+import pytest
 
-from src.utils import (
-    get_data_from_excel,
-    sort_date_operations,
-    greeting_user,
-    top_five_transactions,
-    operations_cards,
-    stock_prices, currency_rates,
-)
+from src.utils import (currency_rates, get_data_from_excel, greeting_user, operations_cards, sort_date_operations,
+                       stock_prices, top_five_transactions)
 
 
 @patch("builtins.open", new_callable=mock_open, read_data=b"\x3c\x80\x00\x00\x00")
@@ -61,18 +55,18 @@ def test_sort_date_operations(operations_list: list) -> None:
     ],
 )
 @patch("src.utils.datetime")
-def test_get_greeting(mocked_datetime, now_datetime, expected_greeting):
+def test_get_greeting(mocked_datetime: datetime, now_datetime: datetime, expected_greeting: str) -> None:
     mocked_datetime.now.return_value = now_datetime
     assert greeting_user() == expected_greeting
 
 
 def test_operations_cards() -> None:
-    assert operations_cards([{"Номер карты": "*1234", "Сумма операции": -1.0}]) == [
+    assert operations_cards([{"Номер карты": "*1234", "Сумма операции с округлением": 1.0}]) == [
         {"last_digits": "1234", "total_spent": 1.0, "cashback": 0.01}
     ]
 
 
-def test_top_five_transactions(small_operations_list) -> None:
+def test_top_five_transactions(small_operations_list: list) -> None:
     assert top_five_transactions(small_operations_list) == [
         {"date": "11.01.2021", "amount": 9925.84, "category": "ЖКХ", "description": "ЖКУ Квартира"}
     ]
@@ -80,25 +74,16 @@ def test_top_five_transactions(small_operations_list) -> None:
 
 @patch("requests.get")
 @patch("requests.get")
-def test_currency_rates(mock_usd, mock_eur) -> None:
+def test_currency_rates(mock_usd: Any, mock_eur: Any) -> None:
     mock_usd.return_value.status_code = 200
     mock_eur.return_value.status_code = 200
-    mock_usd.return_value.json.return_value = {'data': {'RUB': {'value': 1.00}}}
-    mock_eur.return_value.json.return_value = {'data': {'RUB': {'value': 1.00}}}
-    assert currency_rates() == [
-        {
-            'currency': 'USD',
-            'rate': 1.00
-        },
-        {
-            'currency': 'EUR',
-            'rate': 1.00
-        }
-    ]
+    mock_usd.return_value.json.return_value = {"data": {"RUB": {"value": 1.00}}}
+    mock_eur.return_value.json.return_value = {"data": {"RUB": {"value": 1.00}}}
+    assert currency_rates() == [{"currency": "USD", "rate": 1.00}, {"currency": "EUR", "rate": 1.00}]
 
 
 @patch("requests.get")
-def test_stock_prices(mock_convert):
+def test_stock_prices(mock_convert: Any):
     mock_convert.return_value.status_code = 200
-    mock_convert.return_value.json.return_value = {"data": {"symbol": "AAPL", "close": 1.0}}
+    mock_convert.return_value.json.return_value = {"data": [{"symbol": "AAPL", "close": 1.0}]}
     assert stock_prices() == [{"stock": "AAPL", "price": 1.0}]
