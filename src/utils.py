@@ -100,7 +100,7 @@ def top_five_transactions(operations: list) -> list:
     """Возвращает топ-5 транзакций по сумме платежа"""
     sort_transaction = []
     logger.info("Ищем топ-5 транзакций по сумме платежа.")
-    sorted_operations = sorted(operations, key=lambda x: x["Сумма операции с округлением"])
+    sorted_operations = sorted(operations, key=lambda x: x["Сумма операции с округлением"], reverse=True)
     top_transactions = sorted_operations[:5]
     for sort in top_transactions:
         date = sort["Дата операции"][:10]

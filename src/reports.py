@@ -34,7 +34,7 @@ def recording_data(file_name) -> Callable:
     return decorator
 
 
-# @recording_data('spending_report.json')
+#@recording_data('spending_report.json')
 def spending_by_category(transactions: pd.DataFrame, category: str, date: Optional[str] = None) -> pd.DataFrame:
     """Возвращает траты по заданной категории за последние три месяца (от переданной даты)"""
     logger.info("Ищем траты по конкретной категории")
