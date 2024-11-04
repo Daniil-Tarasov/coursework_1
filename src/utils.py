@@ -63,7 +63,7 @@ def operations_cards(operations: list):
         card_number = str(operation.get('Номер карты'))
         str_amount = str(operation.get('Сумма операции'))
         amount = str_amount[1:]
-        if card_number != '':
+        if card_number != 'nan':
             last_digits = card_number[-4:]
             if last_digits in card_operations:
                 card_operations[last_digits]['total_spent'] += float(amount)
@@ -84,7 +84,7 @@ def top_five_transactions(operations: list):
         date = sort['Дата операции'][:10]
         str_amount = str(sort.get('Сумма операции'))
         amount = str_amount[1:]
-        sort_transaction.append({"date": date, 'amount': amount, 'category': sort['Категория'], 'description': sort['Описание']})
+        sort_transaction.append({"date": date, 'amount': float(amount), 'category': sort['Категория'], 'description': sort['Описание']})
     return sort_transaction
 
 
@@ -94,16 +94,17 @@ def currency_rates():
     result_eur = requests.get(f"https://api.currencyapi.com/v3/latest?apikey={for_currency}&base_currency=EUR&currencies=RUB")
     value_usd = result_usd.json()['data']['RUB']['value']
     value_eur = result_eur.json()['data']['RUB']['value']
-    return [
+    result = [
         {
             'currency': 'USD',
-            'rate': value_usd
+            'rate': round(value_usd, 2)
         },
         {
             'currency': 'EUR',
-            'rate': value_eur
+            'rate': round(value_eur, 2)
         }
     ]
+    return result
 
 
 def stock_prices():
