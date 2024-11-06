@@ -45,19 +45,15 @@ def get_data_from_excel(path_to_the_file: str) -> pd.DataFrame | list:
     else:
         operations = pd.read_excel(path_to_the_file)
         logger.info("Успешное выполнение")
-        return operations
+        return operations.to_dict(orient='records')
 
 
 def filter_date_operations(operations: pd.DataFrame, date: str) -> list:
     """Возвращает операции за текущий месяц"""
-    sorted_operations = []
     first_day_moth = datetime.strptime(date, "%Y-%m-%d %H:%M:%S").replace(day=1, hour=00, minute=00, second=00)
-    data_datetime = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
-    for operation in operations:
-        date_operation = datetime.strptime(operation["Дата операции"], "%d.%m.%Y %H:%M:%S")
-        if first_day_moth <= date_operation <= data_datetime:
-            sorted_operations.append(operation)
-    return sorted_operations
+    operations['Дата операции'] = pd.to_datetime(operations['Дата операции'], format="%d.%m.%Y %H:%M:%S")
+    return operations[(operations['Дата операции'] >= first_day_moth) &
+                      (operations['Дата операции'] <= datetime.strptime(date, "%Y-%m-%d %H:%M:%S"))]
 
 
 def greeting_user() -> str:
@@ -126,3 +122,10 @@ def stock_prices() -> list:
         for data in response.json()["data"]:
             result.append({"stock": data["symbol"], "price": data["close"]})
         return result
+
+
+def convert_timestamps_to_strings(dataframe):
+    """Преобразует все столбцы с типом 'datetime64[ns]' в строки."""
+    for col in dataframe.select_dtypes(include=['datetime64[ns]']).columns:
+        dataframe[col] = dataframe[col].dt.strftime('%Y-%m-%d %H:%M:%S')
+    return dataframe

@@ -19,7 +19,7 @@ file_handler.setFormatter(file_formatter)
 logger.addHandler(file_handler)
 
 
-def recording_data(file_name='default_report.json') -> Callable:
+def recording_data(file_name: str='default_report.json') -> Callable:
     """Декоратор, который записывает в файл результат, который возвращает функция, формирующая отчет"""
 
     def decorator(func) -> Callable:
@@ -45,5 +45,5 @@ def spending_by_category(transactions: pd.DataFrame, category: str, date: Option
     filtered_operations = transactions[transactions["Категория"] == category].copy()
     df_date = pd.to_datetime(transactions["Дата платежа"], format="%d.%m.%Y")
     filtered_operations = transactions[(three_months_ago <= df_date) & (df_date <= date)]
-    result = filtered_operations["Сумма операции с округлением"].sum()
-    return pd.DataFrame({"Траты": [result]})
+    #result = filtered_operations["Сумма операции с округлением"].sum()
+    return filtered_operations
