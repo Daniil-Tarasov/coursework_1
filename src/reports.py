@@ -25,8 +25,9 @@ def recording_data(file_name: str='default_report.json') -> Callable:
     def decorator(func) -> Callable:
         def wrapper(*args, **kwargs) -> json:
             result = func(*args, **kwargs)
-            with open(file_name, "w") as f:
-                json.dump(result, f)
+            result_json = result.to_json(orient='records')
+            with open(file_name, "w", encoding="utf-8") as f:
+                f.write(result_json)
             return result
 
         return wrapper

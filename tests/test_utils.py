@@ -5,7 +5,7 @@ from unittest.mock import mock_open, patch
 import pandas as pd
 import pytest
 
-from src.utils import (currency_rates, get_data_from_excel, greeting_user, operations_cards, sort_date_operations,
+from src.utils import (currency_rates, get_data_from_excel, greeting_user, operations_cards, filter_date_operations,
                        stock_prices, top_five_transactions)
 
 
@@ -23,26 +23,9 @@ def test_not_found_excel(mock_file: Any) -> None:
     assert transactions == []
 
 
-def test_sort_date_operations(operations_list: list) -> None:
-    assert sort_date_operations(operations_list, "2022-01-10 11:15:21") == [
-        {
-            "Дата операции": "10.01.2022 10:04:26",
-            "Дата платежа": "11.01.2021",
-            "Номер карты": "",
-            "Статус": "OK",
-            "Сумма операции": -9925.84,
-            "Валюта операции": "RUB",
-            "Сумма платежа": -9925.84,
-            "Валюта платежа": "RUB",
-            "Кэшбэк": "",
-            "Категория": "ЖКХ",
-            "MCC": "",
-            "Описание": "ЖКУ Квартира",
-            "Бонусы (включая кэшбэк)": 99,
-            "Округление на инвесткопилку": 0,
-            "Сумма операции с округлением": 9925.84,
-        }
-    ]
+def test_filter_date_operations(transactions: pd.DataFrame) -> None:
+    result_df = filter_date_operations(transactions, "2021-12-29 11:15:21")
+    assert len(result_df) == 2
 
 
 @pytest.mark.parametrize(
@@ -60,15 +43,15 @@ def test_get_greeting(mocked_datetime: datetime, now_datetime: datetime, expecte
     assert greeting_user() == expected_greeting
 
 
-def test_operations_cards() -> None:
-    assert operations_cards([{"Номер карты": "*1234", "Сумма операции с округлением": 1.0}]) == [
-        {"last_digits": "1234", "total_spent": 1.0, "cashback": 0.01}
+def test_operations_cards(transactions: pd.DataFrame) -> None:
+    assert operations_cards(transactions) == [
+        {"last_digits": "7197", "total_spent": 600.00, "cashback": 6.00}
     ]
 
 
-def test_top_five_transactions(small_operations_list: list) -> None:
-    assert top_five_transactions(small_operations_list) == [
-        {"date": "11.01.2021", "amount": 9925.84, "category": "ЖКХ", "description": "ЖКУ Квартира"}
+def test_top_five_transactions(small_operations: pd.DataFrame) -> None:
+    assert top_five_transactions(small_operations) == [
+        {"date": "20.09.2021 12:45:12", "amount": 200.00, "category": "Супермаркеты", "description": "Магнит"}
     ]
 
 
