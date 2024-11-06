@@ -27,7 +27,7 @@ for_currency = os.getenv("API_KEY_FOR_CURRENCY")
 for_share = os.getenv("API_KEY_FOR_STOCK")
 
 
-def get_data_from_excel(path_to_the_file: str) -> list:
+def get_data_from_excel(path_to_the_file: str) -> pd.DataFrame | list:
     """Функция, которая возвращает данные о финансовых транзакциях из файла excel"""
     try:
         pd.read_excel(path_to_the_file)
@@ -45,11 +45,11 @@ def get_data_from_excel(path_to_the_file: str) -> list:
     else:
         operations = pd.read_excel(path_to_the_file)
         logger.info("Успешное выполнение")
-        return operations.to_dict(orient="records")
+        return operations
 
 
-def filter_date_operations(operations: list, date: str) -> list:
-    """Сортирует операции за текущий месяц"""
+def filter_date_operations(operations: pd.DataFrame, date: str) -> list:
+    """Возвращает операции за текущий месяц"""
     sorted_operations = []
     first_day_moth = datetime.strptime(date, "%Y-%m-%d %H:%M:%S").replace(day=1, hour=00, minute=00, second=00)
     data_datetime = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
@@ -74,41 +74,29 @@ def greeting_user() -> str:
         return "Добрый вечер"
 
 
-def operations_cards(operations: list) -> list:
+def operations_cards(operations: pd.DataFrame) -> list:
     """Возвращает данные по каждой карте"""
-    card_operations = {}
-    result = []
-    logger.info("Ищем информацию по каждой карте")
-    for operation in operations:
-        card_number = str(operation.get("Номер карты"))
-        amount = operation.get("Сумма операции с округлением")
-        if card_number != "nan":
-            last_digits = card_number[-4:]
-            if last_digits in card_operations:
-                card_operations[last_digits]["total_spent"] += amount
-            else:
-                card_operations[last_digits] = {"total_spent": (amount), "cashback": 0}
-            card_operations[last_digits]["cashback"] = card_operations[last_digits]["total_spent"] * 0.01
-    for digits, data in card_operations.items():
-        result.append(
-            {"last_digits": digits, "total_spent": round(data["total_spent"], 2), "cashback": data["cashback"]}
-        )
-    return result
+    grouped_operations = operations.groupby('Номер карты')['Сумма операции с округлением'].sum().reset_index()
+    grouped_operations['Cashback'] = (grouped_operations['Сумма операции с округлением'] // 100).astype(int)
+    grouped_operations['LastFourDigits'] = grouped_operations['Номер карты'].astype(str).str[-4:]
+    result = grouped_operations[['LastFourDigits', 'Сумма операции с округлением', 'Cashback']]
+    result.columns = ['last_digits', 'total_spent', 'cashback']
+
+    return result.to_dict(orient='records')
 
 
-def top_five_transactions(operations: list) -> list:
+def top_five_transactions(operations: pd.DataFrame) -> list:
     """Возвращает топ-5 транзакций по сумме платежа"""
-    sort_transaction = []
-    logger.info("Ищем топ-5 транзакций по сумме платежа.")
-    sorted_operations = sorted(operations, key=lambda x: x["Сумма операции с округлением"], reverse=True)
-    top_transactions = sorted_operations[:5]
-    for sort in top_transactions:
-        date = sort["Дата операции"][:10]
-        str_amount = sort.get("Сумма операции с округлением")
-        sort_transaction.append(
-            {"date": date, "amount": str_amount, "category": sort["Категория"], "description": sort["Описание"]}
-        )
-    return sort_transaction
+    result = []
+    top_transactions = operations.nlargest(5, 'Сумма операции с округлением')
+    for transaction in top_transactions.to_dict(orient='records'):
+        result.append({
+            'date': transaction['Дата операции'],
+            'amount': transaction['Сумма операции с округлением'],
+            "category": transaction['Категория'],
+            "description": transaction['Описание']
+        })
+    return result
 
 
 def currency_rates() -> list:
