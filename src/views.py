@@ -2,8 +2,8 @@ import json
 
 import pandas as pd
 
-from src.utils import (currency_rates, greeting_user, operations_cards, filter_date_operations,
-                       stock_prices, top_five_transactions, convert_timestamps_to_strings)
+from src.utils import (convert_timestamps_to_strings, currency_rates, filter_date_operations, greeting_user,
+                       operations_cards, stock_prices, top_five_transactions)
 
 
 def web_main(date: str) -> json:

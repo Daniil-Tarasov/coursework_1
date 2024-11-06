@@ -5,7 +5,7 @@ from unittest.mock import mock_open, patch
 import pandas as pd
 import pytest
 
-from src.utils import (currency_rates, get_data_from_excel, greeting_user, operations_cards, filter_date_operations,
+from src.utils import (currency_rates, filter_date_operations, get_data_from_excel, greeting_user, operations_cards,
                        stock_prices, top_five_transactions)
 
 
@@ -44,9 +44,7 @@ def test_get_greeting(mocked_datetime: datetime, now_datetime: datetime, expecte
 
 
 def test_operations_cards(transactions: pd.DataFrame) -> None:
-    assert operations_cards(transactions) == [
-        {"last_digits": "7197", "total_spent": 600.00, "cashback": 6.00}
-    ]
+    assert operations_cards(transactions) == [{"last_digits": "7197", "total_spent": 600.00, "cashback": 6.00}]
 
 
 def test_top_five_transactions(small_operations: pd.DataFrame) -> None:

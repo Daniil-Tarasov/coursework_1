@@ -45,15 +45,17 @@ def get_data_from_excel(path_to_the_file: str) -> pd.DataFrame | list:
     else:
         operations = pd.read_excel(path_to_the_file)
         logger.info("Успешное выполнение")
-        return operations.to_dict(orient='records')
+        return operations.to_dict(orient="records")
 
 
 def filter_date_operations(operations: pd.DataFrame, date: str) -> list:
     """Возвращает операции за текущий месяц"""
     first_day_moth = datetime.strptime(date, "%Y-%m-%d %H:%M:%S").replace(day=1, hour=00, minute=00, second=00)
-    operations['Дата операции'] = pd.to_datetime(operations['Дата операции'], format="%d.%m.%Y %H:%M:%S")
-    return operations[(operations['Дата операции'] >= first_day_moth) &
-                      (operations['Дата операции'] <= datetime.strptime(date, "%Y-%m-%d %H:%M:%S"))]
+    operations["Дата операции"] = pd.to_datetime(operations["Дата операции"], format="%d.%m.%Y %H:%M:%S")
+    return operations[
+        (operations["Дата операции"] >= first_day_moth)
+        & (operations["Дата операции"] <= datetime.strptime(date, "%Y-%m-%d %H:%M:%S"))
+    ]
 
 
 def greeting_user() -> str:
@@ -72,26 +74,28 @@ def greeting_user() -> str:
 
 def operations_cards(operations: pd.DataFrame) -> list:
     """Возвращает данные по каждой карте"""
-    grouped_operations = operations.groupby('Номер карты')['Сумма операции с округлением'].sum().reset_index()
-    grouped_operations['Cashback'] = (grouped_operations['Сумма операции с округлением'] // 100).astype(int)
-    grouped_operations['LastFourDigits'] = grouped_operations['Номер карты'].astype(str).str[-4:]
-    result = grouped_operations[['LastFourDigits', 'Сумма операции с округлением', 'Cashback']]
-    result.columns = ['last_digits', 'total_spent', 'cashback']
+    grouped_operations = operations.groupby("Номер карты")["Сумма операции с округлением"].sum().reset_index()
+    grouped_operations["Cashback"] = (grouped_operations["Сумма операции с округлением"] // 100).astype(int)
+    grouped_operations["LastFourDigits"] = grouped_operations["Номер карты"].astype(str).str[-4:]
+    result = grouped_operations[["LastFourDigits", "Сумма операции с округлением", "Cashback"]]
+    result.columns = ["last_digits", "total_spent", "cashback"]
 
-    return result.to_dict(orient='records')
+    return result.to_dict(orient="records")
 
 
 def top_five_transactions(operations: pd.DataFrame) -> list:
     """Возвращает топ-5 транзакций по сумме платежа"""
     result = []
-    top_transactions = operations.nlargest(5, 'Сумма операции с округлением')
-    for transaction in top_transactions.to_dict(orient='records'):
-        result.append({
-            'date': transaction['Дата операции'],
-            'amount': transaction['Сумма операции с округлением'],
-            "category": transaction['Категория'],
-            "description": transaction['Описание']
-        })
+    top_transactions = operations.nlargest(5, "Сумма операции с округлением")
+    for transaction in top_transactions.to_dict(orient="records"):
+        result.append(
+            {
+                "date": transaction["Дата операции"],
+                "amount": transaction["Сумма операции с округлением"],
+                "category": transaction["Категория"],
+                "description": transaction["Описание"],
+            }
+        )
     return result
 
 
@@ -101,7 +105,7 @@ def currency_rates() -> list:
     with open(file_json, encoding="utf-8") as file:
         result_currencies = []
         user_currencies = json.load(file)
-        for currency in user_currencies['user_currencies']:
+        for currency in user_currencies["user_currencies"]:
             response = requests.get(
                 f"https://api.currencyapi.com/v3/latest?apikey={for_currency}&base_currency={currency}&currencies=RUB"
             )
@@ -126,6 +130,6 @@ def stock_prices() -> list:
 
 def convert_timestamps_to_strings(dataframe):
     """Преобразует все столбцы с типом 'datetime64[ns]' в строки."""
-    for col in dataframe.select_dtypes(include=['datetime64[ns]']).columns:
-        dataframe[col] = dataframe[col].dt.strftime('%Y-%m-%d %H:%M:%S')
+    for col in dataframe.select_dtypes(include=["datetime64[ns]"]).columns:
+        dataframe[col] = dataframe[col].dt.strftime("%Y-%m-%d %H:%M:%S")
     return dataframe
