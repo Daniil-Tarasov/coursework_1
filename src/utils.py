@@ -48,10 +48,10 @@ def get_data_from_excel(path_to_the_file: str) -> list:
         return operations.to_dict(orient="records")
 
 
-def sort_date_operations(operations: list, date: str) -> list:
+def filter_date_operations(operations: list, date: str) -> list:
     """Сортирует операции за текущий месяц"""
     sorted_operations = []
-    first_day_moth = datetime.strptime(date, "%Y-%m-%d %H:%M:%S").replace(day=1)
+    first_day_moth = datetime.strptime(date, "%Y-%m-%d %H:%M:%S").replace(day=1, hour=00, minute=00, second=00)
     data_datetime = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
     for operation in operations:
         date_operation = datetime.strptime(operation["Дата операции"], "%d.%m.%Y %H:%M:%S")
@@ -114,16 +114,15 @@ def top_five_transactions(operations: list) -> list:
 def currency_rates() -> list:
     """Возвращает курсы валют"""
     logger.info("Поиска курс валют")
-    result_usd = requests.get(
-        f"https://api.currencyapi.com/v3/latest?apikey={for_currency}&base_currency=USD&currencies=RUB"
-    )
-    result_eur = requests.get(
-        f"https://api.currencyapi.com/v3/latest?apikey={for_currency}&base_currency=EUR&currencies=RUB"
-    )
-    value_usd = result_usd.json()["data"]["RUB"]["value"]
-    value_eur = result_eur.json()["data"]["RUB"]["value"]
-    result = [{"currency": "USD", "rate": round(value_usd, 2)}, {"currency": "EUR", "rate": round(value_eur, 2)}]
-    return result
+    with open(file_json, encoding="utf-8") as file:
+        result_currencies = []
+        user_currencies = json.load(file)
+        for currency in user_currencies['user_currencies']:
+            response = requests.get(
+                f"https://api.currencyapi.com/v3/latest?apikey={for_currency}&base_currency={currency}&currencies=RUB"
+            )
+            result_currencies.append({"currency": currency, "rate": round(response.json()["data"]["RUB"]["value"], 2)})
+    return result_currencies
 
 
 def stock_prices() -> list:

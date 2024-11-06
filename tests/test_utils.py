@@ -73,12 +73,9 @@ def test_top_five_transactions(small_operations_list: list) -> None:
 
 
 @patch("requests.get")
-@patch("requests.get")
-def test_currency_rates(mock_usd: Any, mock_eur: Any) -> None:
-    mock_usd.return_value.status_code = 200
-    mock_eur.return_value.status_code = 200
-    mock_usd.return_value.json.return_value = {"data": {"RUB": {"value": 1.00}}}
-    mock_eur.return_value.json.return_value = {"data": {"RUB": {"value": 1.00}}}
+def test_currency_rates(mock_convert: Any) -> None:
+    mock_convert.return_value.status_code = 200
+    mock_convert.return_value.json.return_value = {"data": {"RUB": {"value": 1.00}}}
     assert currency_rates() == [{"currency": "USD", "rate": 1.00}, {"currency": "EUR", "rate": 1.00}]
 
 
