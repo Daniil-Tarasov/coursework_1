@@ -103,13 +103,13 @@ def currency_rates() -> list:
     """Возвращает курсы валют"""
     logger.info("Поиска курс валют")
     with open(file_json, encoding="utf-8") as file:
-        result_currencies = []
         user_currencies = json.load(file)
-        for currency in user_currencies["user_currencies"]:
-            response = requests.get(
-                f"https://api.currencyapi.com/v3/latest?apikey={for_currency}&base_currency={currency}&currencies=RUB"
-            )
-            result_currencies.append({"currency": currency, "rate": round(response.json()["data"]["RUB"]["value"], 2)})
+    result_currencies = []
+    for currency in user_currencies["user_currencies"]:
+        response = requests.get(
+            f"https://api.currencyapi.com/v3/latest?apikey={for_currency}&base_currency={currency}&currencies=RUB"
+        )
+        result_currencies.append({"currency": currency, "rate": round(response.json()["data"]["RUB"]["value"], 2)})
     return result_currencies
 
 

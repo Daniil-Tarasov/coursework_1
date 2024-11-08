@@ -25,9 +25,7 @@ def recording_data(file_name: str = "default_report.json") -> Callable:
     def decorator(func) -> Callable:
         def wrapper(*args, **kwargs) -> json:
             result = func(*args, **kwargs)
-            result_json = result.to_json(orient="records")
-            with open(file_name, "w", encoding="utf-8") as f:
-                f.write(result_json)
+            result.to_json(path_or_buf=file_name, orient="records", force_ascii=False, indent=4)
             return result
 
         return wrapper
@@ -35,7 +33,7 @@ def recording_data(file_name: str = "default_report.json") -> Callable:
     return decorator
 
 
-#@recording_data()
+@recording_data()
 def spending_by_category(transactions: pd.DataFrame, category: str, date: Optional[str] = None) -> pd.DataFrame:
     """Возвращает траты по заданной категории за последние три месяца (от переданной даты)"""
     logger.info("Ищем траты по конкретной категории")
@@ -43,8 +41,10 @@ def spending_by_category(transactions: pd.DataFrame, category: str, date: Option
         date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     date = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
     three_months_ago = date - pd.DateOffset(months=3)
-    filtered_operations = transactions[transactions["Категория"] == category].copy()
-    df_date = pd.to_datetime(transactions["Дата платежа"], format="%d.%m.%Y")
-    filtered_operations = transactions[(three_months_ago <= df_date) & (df_date <= date)]
-    # result = filtered_operations["Сумма операции с округлением"].sum()
+    transactions["Дата платежа"] = pd.to_datetime(transactions["Дата платежа"], format="%d.%m.%Y")
+    filtered_operations = transactions[
+        (transactions["Категория"] == category) &
+        (three_months_ago <= transactions["Дата платежа"]) &
+        (transactions["Дата платежа"] <= date)
+        ]
     return filtered_operations
